@@ -1,0 +1,123 @@
+<!DOCTYPE html><html>
+  <head>
+    <meta charset="UTF-8" /> <title>Greeting Person</title>
+    <script src="react.development.js"></script>
+    <script src="react-dom.development.js"></script>
+    <script src="babel.min.js"></script>
+    <link rel="stylesheet" href="./style.css" >
+
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function Welcome(props) {
+            return <h1>Hello, {props.name}</h1>;
+        }
+
+        function generateWorld(countries){
+
+            let world = [];
+            for(var i=0; i < countries.length; i++){
+                let region_name = countries[i].region;
+                let subRegion_name = countries[i]['sub-region'];
+                let country_name = countries[i].name;
+                let regionFlag = false;
+                let subRegionFlag = false;
+
+                let region_obj = {name: region_name, subRegions: [{name: subRegion_name, countries: [ {name: country_name} ]}] };
+
+                if(i==0){
+                    world.push(region_obj);
+                }
+                else{
+                    for(var r = 0; r < world.length; r++){
+                        if(world[r].name == region_name){
+                            regionFlag = true;
+                            for(var s = 0; s < world[r].subRegions.length; s++){
+                                if(world[r].subRegions[s].name == subRegion_name){
+                                    subRegionFlag = true;
+                                    let country_obj = {name:country_name};
+                                    world[r].subRegions[s].countries.push(country_obj); 
+                                } 
+                            }
+                            if(!subRegionFlag){
+                                let subRegion_obj = {name: subRegion_name, countries: [ {name: country_name} ] };
+                                world[r].subRegions.push(subRegion_obj);
+                                subRegionFlag = false;
+                            }
+                        }
+                    }
+                    if(!regionFlag){
+                        world.push(region_obj);
+                        regionFlag = false;
+                    }        
+                }
+            }
+            return world;
+    }
+
+        var headers = new Headers({ "Content-Type": "application/json" })
+        let paises;
+         fetch('https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.json', {method: 'get'})
+        .then(function(response) {
+            return response.json()
+        }).then(function(response){ 
+            let world_ = generateWorld(response);
+            return world_
+        .then( ReactDOM.render(<App world={world_}/>, document.getElementById('root')) )
+         //   ReactDOM.render(<App world={world_}/>, document.getElementById('root'));
+
+         }).catch( function( err ) {
+            console.log(err)
+        });
+
+
+        function RegionsComp(props){
+            return (
+                <div>
+                    {getRegions(props.regions)}
+                </div>
+            );
+        }
+        
+        function getCountries(countries){
+            return (
+            countries.map(element => 
+            <tr><td> {element.name} </td></tr>));
+        }
+
+        function CountriesComp(props){
+            console.log('123')
+            return ( <div> <table>
+                        {getCountries(props.countries)}
+                    </table> </div>
+            );
+        }
+
+        function App(props)  {
+            return (
+                <div>
+                    <RegionsComp regions={props.world}/>
+                </div>
+            );
+        }
+
+        function getRegions(regions){
+            return regions.map(element => <tr><td><div><h2> {element.name}</h2><SubRegionsComp subreg={element.subRegions}/></div></td></tr>);
+        }
+
+
+         function getSubRegions(subregions){
+            return subregions.map(element => <div><h3>Sub Region {element.name}</h3><CountriesComp countries={element.countries}/></div>);
+        }
+
+        function SubRegionsComp(props){
+            return ( <div> <table>
+                        {getSubRegions(props.subreg)}
+                    </table> </div> 
+            );
+        }
+
+    </script>
+  </body>
+</html>
